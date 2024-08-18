@@ -19,3 +19,8 @@
 # Temp Files
 *~
 #*#
+
+# SPIR-V output
+*.spv
+
+.vscode/
