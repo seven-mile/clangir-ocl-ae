@@ -12,7 +12,8 @@ Prerequisites:
 cd $THIS_REPO/OpenCL
 # Compile OpenCL launching programs that interact with the OpenCL driver.
 bash compileCodes.sh
-# Compile *.cl files using ClangIR pipeline. The output is placed side by side with the source *.cl file with *.spv extension.
+# Compile *.cl files using ClangIR pipeline. The output is placed side by side
+# with the source *.cl file with *.spv extension.
 bash compileSPIRV.sh $CLANGIR_BUILD/bin/clang
 
 # Go to the testcase you want to verify.
@@ -22,7 +23,8 @@ cd 2DCONV
 ```
 
 > [!NOTE]
-> Currently only the launching programs of 2DCONV, CORR and GEMM testcases are modified to consume the `*.spv` IL file. Will update other testcases soon.
+> Currently only the launching programs of 2DCONV, CORR and GEMM testcases are
+> modified to consume the `*.spv` IL file. Will update other testcases soon.
 
 And hopefully, you can get a successful result verification log line:
 
