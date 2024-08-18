@@ -1,4 +1,45 @@
-README
+# OpenCL support for ClangIR: Artifact Evaluation
+
+Prerequisites:
+
+* Make sure you can compile original polybenchGpu benchmarks in your environment. Depending on the situation, you may find OneAPI base toolkit helpful for a Intel-CPU-only evaluation.
+* Compile latest [ClangIR](https://github.com/llvm/clangir) from source, following the instructions from [ClangIR website](https://llvm.github.io/clangir/GettingStarted/build-install.html). Let's say you have the cmake build directory as `$CLANGIR_BUILD`.
+
+```bash
+# Optional env preparation.
+. /opt/intel/oneapi/setvars.sh
+
+cd $THIS_REPO/OpenCL
+# Compile OpenCL launching programs that interact with the OpenCL driver.
+bash compileCodes.sh
+# Compile *.cl files using ClangIR pipeline. The output is placed side by side with the source *.cl file with *.spv extension.
+bash compileSPIRV.sh $CLANGIR_BUILD/bin/clang
+
+# Go to the testcase you want to verify.
+cd 2DCONV
+# Run the executable.
+./2DConvolution.exe
+```
+
+> [!NOTE]
+> Currently only the launching programs of 2DCONV, CORR and GEMM testcases are modified to consume the `*.spv` IL file. Will update other testcases soon.
+
+And hopefully, you can get a successful result verification log line:
+
+```
+number of platforms is 1
+platform name is Intel(R) OpenCL
+platform version is OpenCL 3.0 LINUX
+number of devices is 1
+device name is Intel(R) Xeon(R) Gold 6430
+GPU Time in seconds:
+0.008545
+CPU Time in seconds:
+0.011051
+Non-Matching CPU-GPU Outputs Beyond Error Threshold of 1.05 Percent: 0
+```
+
+# Original README of polybenchGPU
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 * PolyBench/GPU 1.0:  PolyBench Benchmarks on the GPU using CUDA, OpenCL, HMPP, and OpenACC.  *
