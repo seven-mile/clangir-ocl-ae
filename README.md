@@ -1,9 +1,11 @@
 # OpenCL support for ClangIR: Artifact Evaluation
 
-Prerequisites:
+### Prerequisites
 
 * Make sure you can compile original polybenchGpu benchmarks in your environment. Depending on the situation, you may find OneAPI base toolkit helpful for a Intel-CPU-only evaluation.
 * Compile latest [ClangIR](https://github.com/llvm/clangir) from source, following the instructions from [ClangIR website](https://llvm.github.io/clangir/GettingStarted/build-install.html). Let's say you have the cmake build directory as `$CLANGIR_BUILD`.
+
+### Single test
 
 ```bash
 # Optional env preparation.
@@ -22,10 +24,6 @@ cd 2DCONV
 ./2DConvolution.exe
 ```
 
-> [!NOTE]
-> Currently only the launching programs of 2DCONV, CORR and GEMM testcases are
-> modified to consume the `*.spv` IL file. Will update other testcases soon.
-
 And hopefully, you can get a successful result verification log line:
 
 ```
@@ -39,6 +37,51 @@ GPU Time in seconds:
 CPU Time in seconds:
 0.011051
 Non-Matching CPU-GPU Outputs Beyond Error Threshold of 1.05 Percent: 0
+```
+
+> [!NOTE]
+> The so-called "GPU Time" and "GPU Outputs" here refer to the time and calc
+> result of OpenCL kernel compiled by ClangIR. Although it may be actually run
+> on a CPU.
+
+### Run all OpenCL tests from polybenchGPU
+
+After compiling code and SPIR-V binaries, you can also run all tests at once.
+
+```bash
+cd $THIS_REPO/OpenCL
+bash runTests.sh
+```
+
+The testcases will be invoked one by one. If we detect the percentage of
+non-matching result is `0`, the script will output a nice "PASS".
+
+Note that some tests might take a while because polybenchGPU uses single-threaded CPU program to validate the results.
+
+The output on my machine is:
+
+```
+❯ bash runTests.sh
+2DConvolution: PASS
+2mm: PASS
+3DConvolution: PASS
+3mm: PASS
+adi: PASS
+atax: PASS
+bicg: PASS
+correlation: PASS
+covariance: PASS
+fdtd2d: PASS
+gemm: PASS
+gemver: PASS
+gesummv: PASS
+gramschmidt: PASS
+jacobi1D: PASS
+jacobi2D: PASS
+lu: PASS
+mvt: PASS
+syr2k: PASS
+syrk: PASS
 ```
 
 # Original README of polybenchGPU
