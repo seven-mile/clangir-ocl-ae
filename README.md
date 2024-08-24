@@ -1,15 +1,19 @@
-# OpenCL support for ClangIR: Artifact Evaluation
+# OpenCL C support for ClangIR: Artifact Evaluation
 
 ### Prerequisites
 
 * Make sure you can compile original polybenchGpu benchmarks in your environment. Depending on the situation, you may find OneAPI base toolkit helpful for a Intel-CPU-only evaluation.
-* Compile latest [ClangIR](https://github.com/llvm/clangir) from source, following the instructions from [ClangIR website](https://llvm.github.io/clangir/GettingStarted/build-install.html). Let's say you have the cmake build directory as `$CLANGIR_BUILD`.
+* Build latest [ClangIR](https://github.com/llvm/clangir) from source, following the instructions from [ClangIR website](https://llvm.github.io/clangir/GettingStarted/build-install.html). Let's say you have the cmake build directory as `$CLANGIR_BUILD`.
+* Build [`llvm-spirv` translator](https://github.com/KhronosGroup/SPIRV-LLVM-Translator) from source with your ClangIR repo as the base project (by setting `LLVM_DIR`). Make sure the executable `llvm-spirv` can be found in `PATH`. 
+  * You can also try [prebuilt translator of LLVM v18.1](https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases/tag/v18.1.2) for convenience. But the mismatch version may cause unexpected behaviors.
 
 ### Single test
 
 ```bash
 # Optional env preparation.
 . /opt/intel/oneapi/setvars.sh
+# Make sure you can find llvm-spirv now.
+which llvm-spirv
 
 cd $THIS_REPO/OpenCL
 # Compile OpenCL launching programs that interact with the OpenCL driver.
@@ -49,6 +53,18 @@ Non-Matching CPU-GPU Outputs Beyond Error Threshold of 1.05 Percent: 0
 After compiling code and SPIR-V binaries, you can also run all tests at once.
 
 ```bash
+# Optional env preparation.
+. /opt/intel/oneapi/setvars.sh
+# Make sure you can find llvm-spirv now.
+which llvm-spirv
+
+cd $THIS_REPO/OpenCL
+# Compile OpenCL launching programs that interact with the OpenCL driver.
+bash compileCodes.sh
+# Compile *.cl files using ClangIR pipeline. The output is placed side by side
+# with the source *.cl file with *.spv extension.
+bash compileSPIRV.sh $CLANGIR_BUILD/bin/clang
+
 cd $THIS_REPO/OpenCL
 bash runTests.sh
 ```
