@@ -23,7 +23,7 @@
 #define POLYBENCH_TIME 1
 
 //select the OpenCL device to use (can be GPU, CPU, or Accelerator such as Intel Xeon Phi)
-#define OPENCL_DEVICE_SELECTION CL_DEVICE_TYPE_GPU
+#define OPENCL_DEVICE_SELECTION CL_DEVICE_TYPE_CPU
 
 #include "adi.h"
 #include "../../common/polybench.h"
@@ -69,7 +69,7 @@ unsigned int mem_size_A;
 unsigned int mem_size_B;
 unsigned int mem_size_C;
 
-//define RUN_ON_CPU
+#define RUN_ON_CPU
 
 
 void init_array(DATA_TYPE POLYBENCH_2D(A,N,N,n,n), DATA_TYPE POLYBENCH_2D(B,N,N,n,n), DATA_TYPE POLYBENCH_2D(X,N,N,n,n))
@@ -181,11 +181,58 @@ void cl_mem_init(DATA_TYPE POLYBENCH_2D(A,N,N,n,n), DATA_TYPE POLYBENCH_2D(B,N,N
 	if(errcode != CL_SUCCESS)printf("Error in writing buffers\n");
  }
 
+void cl_load_prog_spv() {
+  // Load the kernel source code into the array source_str
+  const char *path = "adi.spv";
+  FILE *il_file = fopen(path, "rb");
+  if (!il_file) {
+    printf("Failed to open SPIR-V file: %s\n", path);
+    exit(1);
+  }
+
+  // Get file size
+  fseek(il_file, 0, SEEK_END);
+  long il_size = ftell(il_file);
+  fseek(il_file, 0, SEEK_SET);
+
+  // Allocate memory for file content
+  char *il = (char *)malloc(il_size);
+  if (!il) {
+    printf("Failed to allocate memory for SPIR-V file\n");
+    fclose(il_file);
+    exit(1);
+  }
+
+  // Read file content
+  size_t read_size = fread(il, 1, il_size, il_file);
+  if (read_size != il_size) {
+    printf("Failed to read SPIR-V file: %s\n", path);
+    fclose(il_file);
+    free(il);
+    exit(1);
+  }
+
+  fclose(il_file);
+
+  clProgram = clCreateProgramWithIL(clGPUContext, il, il_size, &errcode);
+  if (errcode != CL_SUCCESS) {
+    printf("Error in creating program\n");
+    free(il);
+    exit(1);
+  }
+
+  errcode = clBuildProgram(clProgram, 1, &device_id, NULL, NULL, NULL);
+  if (errcode != CL_SUCCESS) {
+    printf("Error in building program\n");
+    free(il);
+    exit(1);
+  }
+}
+
 void cl_load_prog()
 {
 	// Create a program from the kernel source
-	clProgram = clCreateProgramWithSource(clGPUContext, 1, (const char **)&source_str, (const size_t *)&source_size, &errcode);
-	if(errcode != CL_SUCCESS) printf("Error in creating program\n");
+	cl_load_prog_spv();
 
 	// Build the program
 	errcode = clBuildProgram(clProgram, 1, &device_id, NULL, NULL, NULL);
@@ -418,7 +465,7 @@ int main(void)
 	init_array(POLYBENCH_ARRAY(A1), POLYBENCH_ARRAY(B1), POLYBENCH_ARRAY(X1));
 	init_array(POLYBENCH_ARRAY(A2), POLYBENCH_ARRAY(B2), POLYBENCH_ARRAY(X2));
 
-	read_cl_file();
+	// read_cl_file();
 	cl_initialization();
 	cl_mem_init(POLYBENCH_ARRAY(A1), POLYBENCH_ARRAY(B1), POLYBENCH_ARRAY(X1));
 	cl_load_prog();

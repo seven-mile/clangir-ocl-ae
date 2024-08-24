@@ -23,7 +23,7 @@
 #define POLYBENCH_TIME 1
 
 //select the OpenCL device to use (can be GPU, CPU, or Accelerator such as Intel Xeon Phi)
-#define OPENCL_DEVICE_SELECTION CL_DEVICE_TYPE_GPU
+#define OPENCL_DEVICE_SELECTION CL_DEVICE_TYPE_CPU
 
 #include "bicg.h"
 #include "../../common/polybench.h"
@@ -185,12 +185,58 @@ void cl_mem_init(DATA_TYPE POLYBENCH_2D(A,NX,NY,nx,ny), DATA_TYPE POLYBENCH_1D(r
 	if(errcode != CL_SUCCESS)printf("Error in writing buffers\n");
  }
 
+void cl_load_prog_spv() {
+  // Load the kernel source code into the array source_str
+  const char *path = "bicg.spv";
+  FILE *il_file = fopen(path, "rb");
+  if (!il_file) {
+    printf("Failed to open SPIR-V file: %s\n", path);
+    exit(1);
+  }
+
+  // Get file size
+  fseek(il_file, 0, SEEK_END);
+  long il_size = ftell(il_file);
+  fseek(il_file, 0, SEEK_SET);
+
+  // Allocate memory for file content
+  char *il = (char *)malloc(il_size);
+  if (!il) {
+    printf("Failed to allocate memory for SPIR-V file\n");
+    fclose(il_file);
+    exit(1);
+  }
+
+  // Read file content
+  size_t read_size = fread(il, 1, il_size, il_file);
+  if (read_size != il_size) {
+    printf("Failed to read SPIR-V file: %s\n", path);
+    fclose(il_file);
+    free(il);
+    exit(1);
+  }
+
+  fclose(il_file);
+
+  clProgram = clCreateProgramWithIL(clGPUContext, il, il_size, &errcode);
+  if (errcode != CL_SUCCESS) {
+    printf("Error in creating program\n");
+    free(il);
+    exit(1);
+  }
+
+  errcode = clBuildProgram(clProgram, 1, &device_id, NULL, NULL, NULL);
+  if (errcode != CL_SUCCESS) {
+    printf("Error in building program\n");
+    free(il);
+    exit(1);
+  }
+}
+
 void cl_load_prog()
 {
 	// Create a program from the kernel source
-	clProgram = clCreateProgramWithSource(clGPUContext, 1, (const char **)&source_str, (const size_t *)&source_size, &errcode);
-
-	if(errcode != CL_SUCCESS) printf("Error in creating program\n");
+	cl_load_prog_spv();
 
 	// Build the program
 	errcode = clBuildProgram(clProgram, 1, &device_id, NULL, NULL, NULL);
@@ -332,7 +378,7 @@ int main(void)
 
 	init_array(nx, ny, POLYBENCH_ARRAY(A), POLYBENCH_ARRAY(p), POLYBENCH_ARRAY(r));
 	
-	read_cl_file();
+	// read_cl_file();
 	cl_initialization();
 	cl_mem_init(POLYBENCH_ARRAY(A), POLYBENCH_ARRAY(r), POLYBENCH_ARRAY(s), POLYBENCH_ARRAY(p), POLYBENCH_ARRAY(q));
 	cl_load_prog();
